@@ -8,6 +8,8 @@ plugins {
     id("io.spring.dependency-management")
     id("com.github.ben-manes.versions")
     id("com.diffplug.spotless")
+
+    jacoco
 }
 
 java {
@@ -62,6 +64,43 @@ val functionalTest = task<Test>("functionalTest") {
     }
 }
 
+val excludesPackages: Iterable<String> by extra {
+    listOf(
+        "uk/tw/energy/App**",
+        "uk/tw/energy/SeedingApplicationDataConfiguration**"
+    )
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.95".toBigDecimal()
+            }
+        }
+    }
+    classDirectories.setFrom(
+        sourceSets.main.get().output.asFileTree.matching {
+            exclude(excludesPackages)
+        }
+    )
+}
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(false)
+        csv.required.set(false)
+        html.outputLocation.set(file("$buildDir/reports/jacoco/test"))
+    }
+    classDirectories.setFrom(
+        sourceSets.main.get().output.asFileTree.matching {
+            exclude(excludesPackages)
+        }
+    )
+}
 
 dependencies {
     /* Spring Boot */
@@ -79,7 +118,10 @@ tasks.named<Test>("test") {
     }
 }
 
-tasks.check { dependsOn(functionalTest) }
+tasks.check {
+    dependsOn(functionalTest)
+    finalizedBy(tasks.jacocoTestCoverageVerification, tasks.jacocoTestReport)
+}
 
 fun isNonStable(version: String): Boolean {
     val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }

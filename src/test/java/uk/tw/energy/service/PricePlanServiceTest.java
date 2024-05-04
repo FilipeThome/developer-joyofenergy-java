@@ -1,4 +1,4 @@
-package uk.tw.energy.domain;
+package uk.tw.energy.service;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -7,20 +7,31 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import org.assertj.core.data.Percentage;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.tw.energy.domain.PricePlan;
 
-public class PricePlanTest {
+public class PricePlanServiceTest {
 
   private final String ENERGY_SUPPLIER_NAME = "Energy Supplier Name";
+
+  private PricePlanService pricePlanService;
+  private MeterReadingService meterReadingService;
+
+  @BeforeEach
+  public void setUp() {
+    meterReadingService = new MeterReadingService(new HashMap<>());
+
+    pricePlanService = new PricePlanService(new ArrayList<>(), meterReadingService);
+  }
 
   @Test
   public void shouldReturnTheEnergySupplierGivenInTheConstructor() {
     PricePlan pricePlan = new PricePlan(null, ENERGY_SUPPLIER_NAME, null, null);
 
-    assertThat(pricePlan.getEnergySupplier()).isEqualTo(ENERGY_SUPPLIER_NAME);
+    assertThat(pricePlan.energySupplier()).isEqualTo(ENERGY_SUPPLIER_NAME);
   }
 
   @Test
@@ -31,7 +42,7 @@ public class PricePlanTest {
     PricePlan pricePlan =
         new PricePlan(null, null, BigDecimal.ONE, singletonList(peakTimeMultiplier));
 
-    BigDecimal price = pricePlan.getPrice(normalDateTime);
+    BigDecimal price = pricePlanService.getPrice(pricePlan, normalDateTime);
 
     assertThat(price).isCloseTo(BigDecimal.ONE, Percentage.withPercentage(1));
   }
@@ -44,7 +55,7 @@ public class PricePlanTest {
     PricePlan pricePlan =
         new PricePlan(null, null, BigDecimal.ONE, singletonList(peakTimeMultiplier));
 
-    BigDecimal price = pricePlan.getPrice(exceptionalDateTime);
+    BigDecimal price = pricePlanService.getPrice(pricePlan, exceptionalDateTime);
 
     assertThat(price).isCloseTo(BigDecimal.TEN, Percentage.withPercentage(1));
   }
@@ -60,7 +71,7 @@ public class PricePlanTest {
         Arrays.asList(peakTimeMultiplier, otherPeakTimeMultiplier);
     PricePlan pricePlan = new PricePlan(null, null, BigDecimal.ONE, peakTimeMultipliers);
 
-    BigDecimal price = pricePlan.getPrice(exceptionalDateTime);
+    BigDecimal price = pricePlanService.getPrice(pricePlan, exceptionalDateTime);
 
     assertThat(price).isCloseTo(BigDecimal.TEN, Percentage.withPercentage(1));
   }

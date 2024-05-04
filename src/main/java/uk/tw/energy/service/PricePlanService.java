@@ -3,6 +3,7 @@ package uk.tw.energy.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class PricePlanService {
         pricePlans.stream()
             .collect(
                 Collectors.toMap(
-                    PricePlan::getPlanName, t -> calculateCost(electricityReadings.get(), t))));
+                    PricePlan::planName, t -> calculateCost(electricityReadings.get(), t))));
   }
 
   private BigDecimal calculateCost(
@@ -45,7 +46,7 @@ public class PricePlanService {
     BigDecimal timeElapsed = calculateTimeElapsed(electricityReadings);
 
     BigDecimal averagedCost = average.divide(timeElapsed, RoundingMode.HALF_UP);
-    return averagedCost.multiply(pricePlan.getUnitRate());
+    return averagedCost.multiply(pricePlan.unitRate());
   }
 
   private BigDecimal calculateAverageReading(List<ElectricityReading> electricityReadings) {
@@ -66,5 +67,13 @@ public class PricePlanService {
         electricityReadings.stream().max(Comparator.comparing(ElectricityReading::time)).get();
 
     return BigDecimal.valueOf(Duration.between(first.time(), last.time()).getSeconds() / 3600.0);
+  }
+
+  public BigDecimal getPrice(PricePlan pricePlan, LocalDateTime dateTime) {
+    return pricePlan.peakTimeMultipliers().stream()
+        .filter(multiplier -> multiplier.getDayOfWeek().equals(dateTime.getDayOfWeek()))
+        .findFirst()
+        .map(multiplier -> pricePlan.unitRate().multiply(multiplier.getMultiplier()))
+        .orElse(pricePlan.unitRate());
   }
 }

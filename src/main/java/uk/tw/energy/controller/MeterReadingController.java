@@ -46,8 +46,11 @@ public class MeterReadingController {
   @GetMapping("/read/{smartMeterId}")
   public ResponseEntity readReadings(@PathVariable String smartMeterId) {
     Optional<List<ElectricityReading>> readings = meterReadingService.getReadings(smartMeterId);
-    return readings.isPresent()
-        ? ResponseEntity.ok(readings.get())
-        : ResponseEntity.notFound().build();
+
+    if (!readings.isPresent()) {
+      return ResponseEntity.notFound().build();
+    }
+
+    return ResponseEntity.ok(readings.get());
   }
 }

@@ -46,9 +46,7 @@ public class PricePlanComparatorController {
     pricePlanComparisons.put(PRICE_PLAN_ID_KEY, pricePlanId);
     pricePlanComparisons.put(PRICE_PLAN_COMPARISONS_KEY, consumptionsForPricePlans.get());
 
-    return consumptionsForPricePlans.isPresent()
-        ? ResponseEntity.ok(pricePlanComparisons)
-        : ResponseEntity.notFound().build();
+    return ResponseEntity.ok(pricePlanComparisons);
   }
 
   @GetMapping("/recommend/{smartMeterId}")
